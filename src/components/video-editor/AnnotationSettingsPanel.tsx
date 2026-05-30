@@ -30,6 +30,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { useScopedT } from "@/contexts/I18nContext";
 import { normalizeTextAnimation, TEXT_ANIMATION_OPTIONS } from "@/lib/annotationTextAnimation";
 import { type CustomFont, getCustomFonts } from "@/lib/customFonts";
+import { loadPresetFont } from "@/lib/presetFonts";
 import { cn } from "@/lib/utils";
 import ColorPicker from "../ui/color-picker";
 import { AddCustomFontDialog } from "./AddCustomFontDialog";
@@ -241,7 +242,10 @@ export function AnnotationSettingsPanel({
 									</label>
 									<Select
 										value={annotation.style.fontFamily}
-										onValueChange={(value) => onStyleChange({ fontFamily: value })}
+										onValueChange={(value) => {
+											void loadPresetFont(value);
+											onStyleChange({ fontFamily: value });
+										}}
 									>
 										<SelectTrigger className="w-full bg-white/5 border-white/10 text-slate-200 h-9 text-xs">
 											<SelectValue placeholder={t("annotation.selectStyle")} />
@@ -309,7 +313,7 @@ export function AnnotationSettingsPanel({
 
 							<div>
 								<label className="mb-2 block text-xs font-medium text-slate-200">
-									{t("annotation.textAnimation")}
+									{t("textAnimation.title")}
 								</label>
 								<Select
 									value={normalizeTextAnimation(annotation.style.textAnimation)}
@@ -318,12 +322,12 @@ export function AnnotationSettingsPanel({
 									}
 								>
 									<SelectTrigger className="h-9 w-full border-white/10 bg-white/5 text-xs text-slate-200">
-										<SelectValue placeholder={t("annotation.selectAnimation")} />
+										<SelectValue placeholder={t("textAnimation.selectAnimation")} />
 									</SelectTrigger>
 									<SelectContent className="max-h-[240px] border-white/10 bg-[#1a1a1c] text-slate-200">
 										{TEXT_ANIMATION_OPTIONS.map((option) => (
 											<SelectItem key={option.value} value={option.value}>
-												{option.label}
+												{t(`textAnimation.${option.labelKey}`)}
 											</SelectItem>
 										))}
 									</SelectContent>

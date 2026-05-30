@@ -6,6 +6,7 @@ import {
 	getMosaicGridOverlayColor,
 	getNormalizedMosaicBlockSize,
 } from "@/lib/blurEffects";
+import { loadPresetFont } from "@/lib/presetFonts";
 import { cn } from "@/lib/utils";
 import { getArrowComponent } from "./ArrowSvgs";
 import {
@@ -105,6 +106,12 @@ export function AnnotationOverlay({
 			height: committedHeight,
 		});
 	}, [committedHeight, committedWidth, committedX, committedY]);
+
+	useEffect(() => {
+		if (annotation.type === "text") {
+			void loadPresetFont(annotation.style.fontFamily);
+		}
+	}, [annotation.style.fontFamily, annotation.type]);
 
 	const { x, y, width, height } = liveRect;
 
@@ -316,7 +323,7 @@ export function AnnotationOverlay({
 								textDecoration: annotation.style.textDecoration,
 								textAlign: annotation.style.textAlign,
 								opacity: animationState.opacity,
-								transform: `translate(${animationState.translateX}px, ${animationState.translateY}px) scale(${animationState.scale})`,
+								transform: `translate(${animationState.translateX}em, ${animationState.translateY}em) scale(${animationState.scale})`,
 								transformOrigin: "center",
 								clipPath: typewriterClip,
 								WebkitClipPath: typewriterClip,
