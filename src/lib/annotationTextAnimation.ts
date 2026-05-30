@@ -12,15 +12,15 @@ export interface TextAnimationState {
 
 export const TEXT_ANIMATION_OPTIONS: Array<{
 	value: AnnotationTextAnimation;
-	label: string;
+	labelKey: string;
 }> = [
-	{ value: "none", label: "None" },
-	{ value: "fade", label: "Fade" },
-	{ value: "rise", label: "Rise" },
-	{ value: "pop", label: "Pop" },
-	{ value: "slide-left", label: "Slide" },
-	{ value: "typewriter", label: "Typewriter" },
-	{ value: "pulse", label: "Pulse" },
+	{ value: "none", labelKey: "none" },
+	{ value: "fade", labelKey: "fade" },
+	{ value: "rise", labelKey: "rise" },
+	{ value: "pop", labelKey: "pop" },
+	{ value: "slide-left", labelKey: "slideLeft" },
+	{ value: "typewriter", labelKey: "typewriter" },
+	{ value: "pulse", labelKey: "pulse" },
 ];
 
 function clamp(value: number, min = 0, max = 1) {
@@ -48,6 +48,7 @@ export function normalizeTextAnimation(value: unknown): AnnotationTextAnimation 
 export function getTextAnimationState(
 	annotation: {
 		startMs: number;
+		endMs?: number;
 		style: {
 			textAnimation?: AnnotationTextAnimation;
 		};
@@ -65,7 +66,12 @@ export function getTextAnimationState(
 		};
 	}
 
-	const elapsedMs = Math.max(0, currentTimeMs - annotation.startMs);
+	const endTimeMs =
+		typeof annotation.endMs === "number"
+			? Math.max(annotation.endMs, annotation.startMs)
+			: Number.POSITIVE_INFINITY;
+	const effectiveTimeMs = Math.min(currentTimeMs, endTimeMs);
+	const elapsedMs = Math.max(0, effectiveTimeMs - annotation.startMs);
 	const progress = clamp(elapsedMs / TEXT_ANIMATION_DURATION_MS);
 	const eased = easeOutCubic(progress);
 
@@ -83,7 +89,7 @@ export function getTextAnimationState(
 				opacity: eased,
 				scale: 1,
 				translateX: 0,
-				translateY: (1 - eased) * 18,
+				translateY: (1 - eased) * 0.56,
 				revealProgress: 1,
 			};
 		case "pop":
@@ -98,7 +104,7 @@ export function getTextAnimationState(
 			return {
 				opacity: eased,
 				scale: 1,
-				translateX: (1 - eased) * -28,
+				translateX: (1 - eased) * -0.875,
 				translateY: 0,
 				revealProgress: 1,
 			};
@@ -110,14 +116,16 @@ export function getTextAnimationState(
 				translateY: 0,
 				revealProgress: progress,
 			};
-		case "pulse":
+		case "pulse": {
+			const cycleProgress = (elapsedMs % TEXT_ANIMATION_DURATION_MS) / TEXT_ANIMATION_DURATION_MS;
 			return {
 				opacity: 1,
-				scale: 1 + Math.sin(progress * Math.PI) * 0.06,
+				scale: 1 + Math.sin(cycleProgress * Math.PI) * 0.06,
 				translateX: 0,
 				translateY: 0,
 				revealProgress: 1,
 			};
+		}
 		default:
 			return {
 				opacity: 1,

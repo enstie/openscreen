@@ -267,13 +267,14 @@ function renderText(
 ) {
 	const style = annotation.style;
 	const animationState = getTextAnimationState(annotation, currentTimeMs);
+	const scaledFontSize = style.fontSize * scaleFactor;
 
 	ctx.save();
 
 	const transformOriginX = x + width / 2;
 	const transformOriginY = y + height / 2;
 	ctx.translate(transformOriginX, transformOriginY);
-	ctx.translate(animationState.translateX * scaleFactor, animationState.translateY * scaleFactor);
+	ctx.translate(animationState.translateX * scaledFontSize, animationState.translateY * scaledFontSize);
 	ctx.scale(animationState.scale, animationState.scale);
 	ctx.translate(-transformOriginX, -transformOriginY);
 	ctx.globalAlpha *= animationState.opacity;
@@ -285,7 +286,6 @@ function renderText(
 
 	const fontWeight = style.fontWeight === "bold" ? "bold" : "normal";
 	const fontStyle = style.fontStyle === "italic" ? "italic" : "normal";
-	const scaledFontSize = style.fontSize * scaleFactor;
 	ctx.font = `${fontStyle} ${fontWeight} ${scaledFontSize}px ${style.fontFamily}`;
 	ctx.textBaseline = "middle";
 
@@ -329,13 +329,18 @@ function renderText(
 	const lineHeight = scaledFontSize * 1.4;
 
 	const startY = textY - ((lines.length - 1) * lineHeight) / 2;
+	const revealProgress = animationState.revealProgress;
+	const graphemesByLine = lines.map((line) => splitGraphemes(line));
+	const totalGraphemes = graphemesByLine.reduce((total, graphemes) => total + graphemes.length, 0);
+	let remainingVisibleGraphemes = Math.ceil(totalGraphemes * revealProgress);
 
 	lines.forEach((line, index) => {
 		const currentY = startY + index * lineHeight;
-		const revealProgress = animationState.revealProgress;
-		const graphemes = splitGraphemes(line);
-		const visibleCount = Math.ceil(graphemes.length * revealProgress);
+		const graphemes = graphemesByLine[index];
+		const visibleCount =
+			revealProgress >= 1 ? graphemes.length : Math.max(0, Math.min(graphemes.length, remainingVisibleGraphemes));
 		const visibleLine = revealProgress >= 1 ? line : graphemes.slice(0, visibleCount).join("");
+		remainingVisibleGraphemes = Math.max(0, remainingVisibleGraphemes - visibleCount);
 		if (!visibleLine && revealProgress < 1) return;
 
 		const previousAlign = ctx.textAlign;
